@@ -63,3 +63,12 @@ button:focus-visible,input:focus-visible{outline:2px solid #2563eb;outline-offse
 .dimv{width:7px;border:2px solid var(--ink);border-left:0;margin-left:4px}
 .item .n{line-height:1.3}
 .item .n strong{color:var(--ink)}
+
+/* pattern memory */
+.mgrid{display:grid;gap:8px;max-width:340px;margin:16px auto}
+.mgrid .cell,.mgrid .cell:hover{aspect-ratio:1;width:100%;margin:0;padding:0;border-radius:8px;background:#fff;border:2px solid var(--line);color:inherit}
+.mgrid .cell:not([disabled]){cursor:pointer}
+.mgrid .cell.on,.mgrid .cell.on:hover,.mgrid .cell.sel,.mgrid .cell.sel:hover{background:var(--ink);border-color:var(--ink)}
+.mgrid .cell.miss,.mgrid .cell.miss:hover{border:3px dashed var(--ink)}
+.mgrid .cell.bad,.mgrid .cell.bad:hover{background:#fde8e8;border-color:#c62828}
+.legend{font-size:14px;margin:0}

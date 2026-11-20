@@ -5,7 +5,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 function best(key,val){try{const k='pgs-'+key;const b=Math.max(+localStorage.getItem(k)||0,val);localStorage.setItem(k,b);return b}catch(e){return val}}
 
 /* ---------- Router ---------- */
-const games={color:colorGame,size:sizeGame,memory:memoryGame,count:countGame,sequence:sequenceGame};
+const games={color:colorGame,size:sizeGame,memory:memoryGame,count:countGame,sequence:sequenceGame,match:matchGame};
 function route(){
   clearInterval(timer);
   const g=games[location.hash.slice(1)];
@@ -348,6 +348,60 @@ function sequenceGame(){
       <p class="muted">${score===1?'step':'steps'} repeated correctly. Your best: ${b}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=sequenceGame;
+  }
+}
+
+/* ---------- Memory Match ---------- */
+function matchGame(){
+  /* [columns, rows] for each level. Add or remove levels here. Cards must be an even number. */
+  const LEVELS=[[2,2],[3,2],[4,2],[4,3],[4,4],[5,4],[6,4],[6,5]];
+  const POOL=["🍎","🍌","🍇","🍉","🍓","🍒","🥝","🍕","🚗","🚀","⚽","🎸","🐶","🐱","🐸","🐼","🦊","🌵","🌻","⭐"];
+  const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+  let lv=0,total=0;
+  stage.innerHTML=`<h1>Memory Match</h1>
+    <p class="muted">All the cards start face down. Flip two at a time to find matching pairs. Matches stay face up, and mismatches flip back, so remember where things are. You start with a 2×2 grid, and every level adds more pairs. There are ${LEVELS.length} levels. Each level scores up to 100, based on how few moves you needed.</p>
+    <button id="go">Start</button>`;
+  $('#go').onclick=play;
+  function play(){
+    const cols=LEVELS[lv][0],rows=LEVELS[lv][1],pairs=cols*rows/2;
+    const faces=shuffle(POOL).slice(0,pairs),deck=shuffle([...faces,...faces]);
+    const fs=cols<=3?40:cols===4?34:cols===5?30:26;
+    let first=-1,moves=0,found=0,busy=false;
+    stage.innerHTML=`<p class="muted center" id="st"></p>
+      <div class="cgrid" style="grid-template-columns:repeat(${cols},1fr);max-width:${cols*88}px">${
+        deck.map((_,i)=>`<button class="mcard" data-i="${i}" style="font-size:${fs}px" aria-label="Card ${i+1}"></button>`).join('')}</div>`;
+    const cards=[...stage.querySelectorAll('.mcard')];
+    const st=()=>$('#st').textContent=`Level ${lv+1} of ${LEVELS.length}, ${cols}×${rows}. Moves ${moves}. Pairs found ${found} of ${pairs}.`;
+    st();
+    cards.forEach((c,i)=>c.onclick=()=>{
+      if(busy||c.classList.contains('up')||c.classList.contains('done'))return;
+      c.classList.add('up');c.textContent=deck[i];
+      if(first<0){first=i;return}
+      moves++;
+      const a=first;first=-1;
+      if(deck[a]===deck[i]){
+        cards[a].classList.add('done');c.classList.add('done');found++;st();
+        if(found===pairs){busy=true;timer=setTimeout(finish,700)}
+      }else{
+        busy=true;st();
+        timer=setTimeout(()=>{[cards[a],c].forEach(x=>{x.classList.remove('up');x.textContent=''});busy=false},800);
+      }
+    });
+    function finish(){
+      const pts=Math.round(100*pairs/moves);total+=pts;
+      const last=lv>=LEVELS.length-1;
+      stage.innerHTML=`<div class="center"><div class="score">${pts} / 100</div>
+        <p class="muted">Level ${lv+1} of ${LEVELS.length} cleared in ${moves} moves. The fewest possible is ${pairs}. Total: ${total}</p>
+        <button id="nx">${last?'See final score':`Next level (${LEVELS[lv+1][0]}×${LEVELS[lv+1][1]})`}</button></div>`;
+      $('#nx').onclick=()=>{if(last)end();else{lv++;play()}};
+    }
+  }
+  function end(){
+    const b=best('match',total);
+    stage.innerHTML=`<div class="center"><h1>All levels cleared!</h1><div class="score">${total} / ${LEVELS.length*100}</div>
+      <p class="muted">Your best: ${b}</p>
+      <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
+    $('#again').onclick=matchGame;
   }
 }
 

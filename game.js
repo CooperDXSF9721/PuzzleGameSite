@@ -238,11 +238,11 @@ function memoryGame(){
 
 /* ---------- Quick Count ---------- */
 function countGame(){
-  const MAXSTRIKES=3,PER=3,MAXSIZE=10; /* strikes allowed, flashes per grid size, biggest grid */
+  const MAXSTRIKES=3,PER=3,MAXSIZE=5; /* strikes allowed, flashes per grid size, last grid size */
   const flashMs=()=>300+30*(size-2);   /* flash time in ms: 300 on 2x2, a bit longer on bigger grids */
-  let size=2,done=0,round=1,score=0,strikes=0,k=0,last=0,lit=new Set();
+  let size=2,done=0,round=1,score=0,strikes=0,k=0,last=0,lit=new Set(),finished=false;
   stage.innerHTML=`<h1>Quick Count</h1>
-    <p class="muted">Squares light up on a grid for a split second. Count how many were lit and type the number. Every flash has a random number of squares, from 1 up to one less than the whole grid. After ${PER} flashes the grid grows by one size, starting at 2×2. A correct answer scores the number of lit squares. ${MAXSTRIKES} wrong answers ends the game.</p>
+    <p class="muted">Squares light up on a grid for a split second. Count how many were lit and type the number. Every flash has a random number of squares, from 1 up to one less than the whole grid. After ${PER} flashes the grid grows by one size, starting at 2×2 and ending at ${MAXSIZE}×${MAXSIZE}. A correct answer scores the number of lit squares. ${MAXSTRIKES} wrong answers ends the game.</p>
     <button id="go">Start</button>`;
   $('#go').onclick=ready;
   const status=()=>`<p class="muted center">Grid ${size}×${size}, flash ${done+1} of ${PER}. Score ${score}. Strikes ${'●'.repeat(strikes)}${'○'.repeat(MAXSTRIKES-strikes)}</p>`;
@@ -280,8 +280,8 @@ function countGame(){
     else{strikes++;msg=`Not quite. There were ${k} and you said ${g}. Strike ${strikes} of ${MAXSTRIKES}.`}
     const shown=grid(i=>lit.has(i)?'on':'');
     round++;done++;
-    if(done>=PER){done=0;if(size<MAXSIZE){size++;msg+=` Next up: ${size}×${size}.`}}
-    const over=strikes>=MAXSTRIKES;
+    if(done>=PER){done=0;if(size<MAXSIZE){size++;msg+=` Next up: ${size}×${size}.`}else{finished=true;msg+=` You cleared the ${MAXSIZE}×${MAXSIZE} grid!`}}
+    const over=strikes>=MAXSTRIKES||finished;
     const prev=shown;
     stage.innerHTML=`<p class="center big">${ok?'✓':'✗'}</p><p class="center">${msg}</p>`+prev+
       `<div class="center"><button id="nx">${over?'See final score':'Next flash'}</button></div>`;
@@ -289,8 +289,8 @@ function countGame(){
   }
   function end(){
     const b=best('count',score);
-    stage.innerHTML=`<div class="center"><h1>Game over</h1><div class="score">${score} points</div>
-      <p class="muted">You reached ${size}×${size}. Your best: ${b}</p>
+    stage.innerHTML=`<div class="center"><h1>${finished?'You finished!':'Game over'}</h1><div class="score">${score} points</div>
+      <p class="muted">${finished?`You cleared every grid up to ${MAXSIZE}×${MAXSIZE}.`:`You reached ${size}×${size}.`} Your best: ${b}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=countGame;
   }

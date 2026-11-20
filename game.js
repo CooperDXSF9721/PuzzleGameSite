@@ -5,7 +5,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 function best(key,val){try{const k='pgs-'+key;const b=Math.max(+localStorage.getItem(k)||0,val);localStorage.setItem(k,b);return b}catch(e){return val}}
 
 /* ---------- Router ---------- */
-const games={color:colorGame,size:sizeGame,memory:memoryGame,count:countGame};
+const games={color:colorGame,size:sizeGame,memory:memoryGame,count:countGame,sequence:sequenceGame};
 function route(){
   clearInterval(timer);
   const g=games[location.hash.slice(1)];
@@ -293,6 +293,61 @@ function countGame(){
       <p class="muted">${finished?`You cleared every grid up to ${MAXSIZE}×${MAXSIZE}.`:`You reached ${size}×${size}.`} Your best: ${b}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=countGame;
+  }
+}
+
+/* ---------- Sequence Memory ---------- */
+function sequenceGame(){
+  const PADS=[["Green","g"],["Red","r"],["Yellow","y"],["Blue","b"]];
+  let seq=[],pos=0,locked=true;
+  stage.innerHTML=`<h1>Sequence Memory</h1>
+    <p class="muted">Four colored pads light up in a pattern. Watch it, then tap the same pads in the same order. Each round adds one more step to the pattern, and the playback gets a bit faster. One wrong tap ends the game. Your score is the longest pattern you repeat correctly.</p>
+    <button id="go">Start</button>`;
+  $('#go').onclick=()=>{
+    stage.innerHTML=`<p class="muted center" id="st"></p>
+      <div class="simon locked" id="sm">${PADS.map((p,i)=>`<button class="pad ${p[1]}" data-i="${i}" aria-label="${p[0]}"></button>`).join('')}</div>
+      <p class="center" id="msg"><strong>&nbsp;</strong></p>`;
+    const pads=[...stage.querySelectorAll('.pad')];
+    pads.forEach(p=>p.onclick=()=>tap(+p.dataset.i));
+    next();
+  };
+  const say=t=>{const m=$('#msg');if(m)m.innerHTML=`<strong>${t}</strong>`};
+  const flash=(i,ms)=>{const p=stage.querySelectorAll('.pad')[i];if(!p)return;p.classList.add('lit');setTimeout(()=>p.classList.remove('lit'),ms)};
+  function next(){
+    seq.push(Math.floor(Math.random()*4));pos=0;locked=true;
+    $('#sm').classList.add('locked');
+    $('#st').textContent=`Round ${seq.length}. Score ${seq.length-1}.`;
+    say('Watch…');
+    const on=Math.max(250,600-25*(seq.length-1)),gap=Math.max(120,250-10*seq.length);
+    let i=0;
+    timer=setTimeout(function step(){
+      if(i>=seq.length){locked=false;$('#sm').classList.remove('locked');say('Your turn');return}
+      flash(seq[i],on);i++;
+      timer=setTimeout(step,on+gap);
+    },700);
+  }
+  function tap(i){
+    if(locked)return;
+    if(i!==seq[pos]){
+      locked=true;$('#sm').classList.add('locked');
+      say(`Wrong pad. The next one was ${PADS[seq[pos]][0].toLowerCase()}.`);
+      flash(seq[pos],900);
+      timer=setTimeout(end,1600);return;
+    }
+    flash(i,160);pos++;
+    if(pos===seq.length){
+      locked=true;$('#sm').classList.add('locked');
+      $('#st').textContent=`Round ${seq.length}. Score ${seq.length}.`;
+      say('Correct!');
+      timer=setTimeout(next,900);
+    }
+  }
+  function end(){
+    const score=seq.length-1,b=best('sequence',score);
+    stage.innerHTML=`<div class="center"><h1>Game over</h1><div class="score">${score}</div>
+      <p class="muted">${score===1?'step':'steps'} repeated correctly. Your best: ${b}</p>
+      <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
+    $('#again').onclick=sequenceGame;
   }
 }
 

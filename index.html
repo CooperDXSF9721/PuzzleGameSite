@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puzzle Game Site</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="wrap"><a href="#">Puzzle Game Site</a></div></header>
+
+<main id="menu">
+  <div class="wrap">
+    <section class="hero">
+      <h1>Simple puzzle games.</h1>
+      <p>Quick rounds, no sign-up, nothing to install. Pick a game and see how close you can get.</p>
+    </section>
+    <h2>All games</h2>
+    <div class="games">
+      <a class="card" href="#color"><div class="ic">🎨</div><h3>Color Match</h3><p>A color shows for 3 seconds. Recreate it from memory. The closer you get, the higher your score.</p></a>
+      <a class="card" href="#size"><div class="ic">📏</div><h3>Size Match</h3><p>Two things, one fixed. Resize the other until the scale matches real life.</p></a>
+      <div class="card soon"><div class="ic">➕</div><h3>More coming soon</h3><p>New games will show up here.</p></div>
+    </div>
+    <div class="spacer"></div>
+  </div>
+</main>
+
+<main id="game" hidden>
+  <div class="wrap">
+    <a class="back" href="#">← All games</a>
+    <div class="panel" id="stage"></div>
+  </div>
+</main>
+
+<footer><div class="wrap">Puzzle Game Site · more games on the way</div></footer>
+
+<script src="script.js"></script>
+</body>
+</html>

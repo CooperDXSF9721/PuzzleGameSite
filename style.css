@@ -78,3 +78,16 @@ button:focus-visible,input:focus-visible{outline:2px solid #2563eb;outline-offse
 .qbox .sq{position:absolute;width:9%;aspect-ratio:1;background:var(--ink);border-radius:2px}
 .qbox{overflow:hidden}
 .numin{font:inherit;font-size:28px;width:110px;text-align:center;padding:8px;border:2px solid var(--ink);border-radius:8px;margin:4px 0}
+
+/* sequence memory */
+.simon{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:320px;margin:16px auto}
+.simon .pad,.simon .pad:hover{aspect-ratio:1;width:100%;margin:0;padding:0;border:2px solid var(--line);border-radius:16px;cursor:pointer;transition:background .08s,box-shadow .08s,transform .08s}
+.simon.locked .pad{cursor:default}
+.simon .pad.g,.simon .pad.g:hover{background:#bfe3c1}
+.simon .pad.r,.simon .pad.r:hover{background:#f3c0be}
+.simon .pad.y,.simon .pad.y:hover{background:#f8e3a1}
+.simon .pad.b,.simon .pad.b:hover{background:#b9d9f5}
+.simon .pad.g.lit{background:#2e9e3a;box-shadow:0 0 22px #2e9e3a99;transform:scale(1.03)}
+.simon .pad.r.lit{background:#e53935;box-shadow:0 0 22px #e5393599;transform:scale(1.03)}
+.simon .pad.y.lit{background:#fbc02d;box-shadow:0 0 22px #fbc02d99;transform:scale(1.03)}
+.simon .pad.b.lit{background:#1e88e5;box-shadow:0 0 22px #1e88e599;transform:scale(1.03)}

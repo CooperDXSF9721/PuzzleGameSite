@@ -238,36 +238,35 @@ function memoryGame(){
 
 /* ---------- Quick Count ---------- */
 function countGame(){
-  const FLASH=300,MAXSTRIKES=3,MAXN=25; /* flash time in ms, strikes allowed, most squares ever shown */
-  let n=3,round=1,score=0,strikes=0,pts=[];
+  const MAXSTRIKES=3,PER=3,MAXSIZE=10; /* strikes allowed, flashes per grid size, biggest grid */
+  const flashMs=()=>300+30*(size-2);   /* flash time in ms: 300 on 2x2, a bit longer on bigger grids */
+  let size=2,done=0,round=1,score=0,strikes=0,k=0,last=0,lit=new Set();
   stage.innerHTML=`<h1>Quick Count</h1>
-    <p class="muted">Some squares flash on screen for a split second. Count them and type the number. Each correct answer scores the number of squares and adds one more square to the next flash. ${MAXSTRIKES} wrong answers ends the game.</p>
+    <p class="muted">Squares light up on a grid for a split second. Count how many were lit and type the number. Every flash has a random number of squares, from 1 up to one less than the whole grid. After ${PER} flashes the grid grows by one size, starting at 2×2. A correct answer scores the number of lit squares. ${MAXSTRIKES} wrong answers ends the game.</p>
     <button id="go">Start</button>`;
   $('#go').onclick=ready;
-  const status=()=>`<p class="muted center">Round ${round}. Score ${score}. Strikes ${'●'.repeat(strikes)}${'○'.repeat(MAXSTRIKES-strikes)}</p>`;
-  const box=p=>`<div class="qbox">${p.map(q=>`<span class="sq" style="left:${q[0]}%;top:${q[1]}%"></span>`).join('')}</div>`;
-  function make(){
-    pts=[];
-    for(let t=0;pts.length<n&&t<5000;t++){
-      const x=Math.random()*88,y=Math.random()*88;
-      if(pts.every(q=>Math.hypot(q[0]-x,q[1]-y)>=12))pts.push([x,y]);
-    }
-  }
+  const status=()=>`<p class="muted center">Grid ${size}×${size}, flash ${done+1} of ${PER}. Score ${score}. Strikes ${'●'.repeat(strikes)}${'○'.repeat(MAXSTRIKES-strikes)}</p>`;
+  const grid=cls=>`<div class="mgrid" style="grid-template-columns:repeat(${size},1fr)">${
+    Array.from({length:size*size},(_,i)=>`<button class="cell ${cls(i)}" disabled aria-label="Square ${i+1}"></button>`).join('')}</div>`;
   function ready(){
-    make();
-    stage.innerHTML=status()+box([])+`<p class="center muted">Ready? The squares appear for a split second.</p>
+    const total=size*size;
+    do{k=1+Math.floor(Math.random()*(total-1))}while(k===last);  /* never the same count twice in a row */
+    last=k;
+    lit=new Set();
+    while(lit.size<k)lit.add(Math.floor(Math.random()*total));
+    stage.innerHTML=status()+grid(()=>'')+`<p class="center muted">Ready? The squares light up for a split second.</p>
       <div class="center"><button id="fl">Flash</button></div>`;
     $('#fl').onclick=()=>{
-      stage.innerHTML=status()+box([])+`<p class="center muted">Get ready…</p>`;
+      stage.innerHTML=status()+grid(()=>'')+`<p class="center muted">Get ready…</p>`;
       timer=setTimeout(()=>{
-        stage.innerHTML=status()+box(pts)+`<p class="center muted">&nbsp;</p>`;
-        timer=setTimeout(ask,FLASH);
+        stage.innerHTML=status()+grid(i=>lit.has(i)?'on':'')+`<p class="center muted">&nbsp;</p>`;
+        timer=setTimeout(ask,flashMs());
       },700);
     };
   }
   function ask(){
-    stage.innerHTML=status()+box([])+`<p class="center"><strong>How many squares did you see?</strong></p>
-      <div class="center"><input id="num" class="numin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="Number of squares"></div>
+    stage.innerHTML=status()+grid(()=>'')+`<p class="center"><strong>How many squares were lit?</strong></p>
+      <div class="center"><input id="num" class="numin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="Number of lit squares"></div>
       <div class="center"><button id="ok">Submit</button></div>`;
     const inp=$('#num');inp.focus();
     const go=()=>{if(/^\d+$/.test(inp.value))result(+inp.value)};
@@ -275,20 +274,23 @@ function countGame(){
     inp.onkeydown=e=>{if(e.key==='Enter')go()};
   }
   function result(g){
-    const real=pts.length,ok=g===real;
+    const ok=g===k;
     let msg;
-    if(ok){score+=real;msg=`Correct! There were ${real}. +${real} points.`;n=Math.min(MAXN,n+1)}
-    else{strikes++;msg=`Not quite. There were ${real} and you said ${g}. Strike ${strikes} of ${MAXSTRIKES}.`}
-    round++;
+    if(ok){score+=k;msg=`Correct! There were ${k}. +${k} points.`}
+    else{strikes++;msg=`Not quite. There were ${k} and you said ${g}. Strike ${strikes} of ${MAXSTRIKES}.`}
+    const shown=grid(i=>lit.has(i)?'on':'');
+    round++;done++;
+    if(done>=PER){done=0;if(size<MAXSIZE){size++;msg+=` Next up: ${size}×${size}.`}}
     const over=strikes>=MAXSTRIKES;
-    stage.innerHTML=`<p class="center big">${ok?'✓':'✗'}</p><p class="center">${msg}</p>`+box(pts)+
+    const prev=shown;
+    stage.innerHTML=`<p class="center big">${ok?'✓':'✗'}</p><p class="center">${msg}</p>`+prev+
       `<div class="center"><button id="nx">${over?'See final score':'Next flash'}</button></div>`;
     $('#nx').onclick=over?end:ready;
   }
   function end(){
     const b=best('count',score);
     stage.innerHTML=`<div class="center"><h1>Game over</h1><div class="score">${score} points</div>
-      <p class="muted">You reached ${n} squares. Your best: ${b}</p>
+      <p class="muted">You reached ${size}×${size}. Your best: ${b}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=countGame;
   }

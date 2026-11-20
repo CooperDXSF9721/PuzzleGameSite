@@ -5,7 +5,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 function best(key,val){try{const k='pgs-'+key;const b=Math.max(+localStorage.getItem(k)||0,val);localStorage.setItem(k,b);return b}catch(e){return val}}
 
 /* ---------- Router ---------- */
-const games={color:colorGame,size:sizeGame,memory:memoryGame};
+const games={color:colorGame,size:sizeGame,memory:memoryGame,count:countGame};
 function route(){
   clearInterval(timer);
   const g=games[location.hash.slice(1)];
@@ -233,6 +233,64 @@ function memoryGame(){
       <p class="muted">You reached ${size}×${size}. Your best: ${b}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=memoryGame;
+  }
+}
+
+/* ---------- Quick Count ---------- */
+function countGame(){
+  const FLASH=300,MAXSTRIKES=3,MAXN=25; /* flash time in ms, strikes allowed, most squares ever shown */
+  let n=3,round=1,score=0,strikes=0,pts=[];
+  stage.innerHTML=`<h1>Quick Count</h1>
+    <p class="muted">Some squares flash on screen for a split second. Count them and type the number. Each correct answer scores the number of squares and adds one more square to the next flash. ${MAXSTRIKES} wrong answers ends the game.</p>
+    <button id="go">Start</button>`;
+  $('#go').onclick=ready;
+  const status=()=>`<p class="muted center">Round ${round}. Score ${score}. Strikes ${'●'.repeat(strikes)}${'○'.repeat(MAXSTRIKES-strikes)}</p>`;
+  const box=p=>`<div class="qbox">${p.map(q=>`<span class="sq" style="left:${q[0]}%;top:${q[1]}%"></span>`).join('')}</div>`;
+  function make(){
+    pts=[];
+    for(let t=0;pts.length<n&&t<5000;t++){
+      const x=Math.random()*88,y=Math.random()*88;
+      if(pts.every(q=>Math.hypot(q[0]-x,q[1]-y)>=12))pts.push([x,y]);
+    }
+  }
+  function ready(){
+    make();
+    stage.innerHTML=status()+box([])+`<p class="center muted">Ready? The squares appear for a split second.</p>
+      <div class="center"><button id="fl">Flash</button></div>`;
+    $('#fl').onclick=()=>{
+      stage.innerHTML=status()+box([])+`<p class="center muted">Get ready…</p>`;
+      timer=setTimeout(()=>{
+        stage.innerHTML=status()+box(pts)+`<p class="center muted">&nbsp;</p>`;
+        timer=setTimeout(ask,FLASH);
+      },700);
+    };
+  }
+  function ask(){
+    stage.innerHTML=status()+box([])+`<p class="center"><strong>How many squares did you see?</strong></p>
+      <div class="center"><input id="num" class="numin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="Number of squares"></div>
+      <div class="center"><button id="ok">Submit</button></div>`;
+    const inp=$('#num');inp.focus();
+    const go=()=>{if(/^\d+$/.test(inp.value))result(+inp.value)};
+    $('#ok').onclick=go;
+    inp.onkeydown=e=>{if(e.key==='Enter')go()};
+  }
+  function result(g){
+    const real=pts.length,ok=g===real;
+    let msg;
+    if(ok){score+=real;msg=`Correct! There were ${real}. +${real} points.`;n=Math.min(MAXN,n+1)}
+    else{strikes++;msg=`Not quite. There were ${real} and you said ${g}. Strike ${strikes} of ${MAXSTRIKES}.`}
+    round++;
+    const over=strikes>=MAXSTRIKES;
+    stage.innerHTML=`<p class="center big">${ok?'✓':'✗'}</p><p class="center">${msg}</p>`+box(pts)+
+      `<div class="center"><button id="nx">${over?'See final score':'Next flash'}</button></div>`;
+    $('#nx').onclick=over?end:ready;
+  }
+  function end(){
+    const b=best('count',score);
+    stage.innerHTML=`<div class="center"><h1>Game over</h1><div class="score">${score} points</div>
+      <p class="muted">You reached ${n} squares. Your best: ${b}</p>
+      <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
+    $('#again').onclick=countGame;
   }
 }
 

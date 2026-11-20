@@ -357,9 +357,12 @@ function matchGame(){
   const LEVELS=[[2,2],[3,2],[4,2],[4,3],[4,4],[5,4],[6,4],[6,5]];
   const POOL=["🍎","🍌","🍇","🍉","🍓","🍒","🥝","🍕","🚗","🚀","⚽","🎸","🐶","🐱","🐸","🐼","🦊","🌵","🌻","⭐"];
   const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-  let lv=0,total=0;
+  let lv=0,totalMoves=0,totalTarget=0;
+  /* Target moves for a level: 2 per pair. A player with a very good memory averages about 1.6 per pair, so this gives 25% breathing room. */
+  const target=pairs=>pairs*2;
+  const bestLow=v=>{try{const k='pgs-match-moves',b=Math.min(+localStorage.getItem(k)||Infinity,v);localStorage.setItem(k,b);return b}catch(e){return v}};
   stage.innerHTML=`<h1>Memory Match</h1>
-    <p class="muted">All the cards start face down. Flip two at a time to find matching pairs. Matches stay face up, and mismatches flip back, so remember where things are. You start with a 2×2 grid, and every level adds more pairs. There are ${LEVELS.length} levels. Each level scores up to 100, based on how few moves you needed.</p>
+    <p class="muted">All the cards start face down. Flip two at a time to find matching pairs. Matches stay face up, and mismatches flip back, so remember where things are. You start with a 2×2 grid, and every level adds more pairs. There are ${LEVELS.length} levels. Each level has a target number of moves, which is a good result for someone with a solid memory, and not the bare minimum. A move is two flips.</p>
     <button id="go">Start</button>`;
   $('#go').onclick=play;
   function play(){
@@ -371,7 +374,7 @@ function matchGame(){
       <div class="cgrid" style="grid-template-columns:repeat(${cols},1fr);max-width:${cols*88}px">${
         deck.map((_,i)=>`<button class="mcard" data-i="${i}" style="font-size:${fs}px" aria-label="Card ${i+1}"></button>`).join('')}</div>`;
     const cards=[...stage.querySelectorAll('.mcard')];
-    const st=()=>$('#st').textContent=`Level ${lv+1} of ${LEVELS.length}, ${cols}×${rows}. Moves ${moves}. Pairs found ${found} of ${pairs}.`;
+    const st=()=>$('#st').textContent=`Level ${lv+1} of ${LEVELS.length}, ${cols}×${rows}. Moves ${moves} (target ${target(pairs)}). Pairs found ${found} of ${pairs}.`;
     st();
     cards.forEach((c,i)=>c.onclick=()=>{
       if(busy||c.classList.contains('up')||c.classList.contains('done'))return;
@@ -388,18 +391,21 @@ function matchGame(){
       }
     });
     function finish(){
-      const pts=Math.round(100*pairs/moves);total+=pts;
+      const t=target(pairs);totalMoves+=moves;totalTarget+=t;
       const last=lv>=LEVELS.length-1;
-      stage.innerHTML=`<div class="center"><div class="score">${pts} / 100</div>
-        <p class="muted">Level ${lv+1} of ${LEVELS.length} cleared in ${moves} moves. The fewest possible is ${pairs}. Total: ${total}</p>
-        <button id="nx">${last?'See final score':`Next level (${LEVELS[lv+1][0]}×${LEVELS[lv+1][1]})`}</button></div>`;
+      const verdict=moves<t?'Under target. Great memory!':moves===t?'Right on target.':moves<=t*1.25?'Just over target.':'Over target.';
+      stage.innerHTML=`<div class="center"><div class="score">${moves} moves</div>
+        <p>${verdict}</p>
+        <p class="muted">Level ${lv+1} of ${LEVELS.length}, ${cols}×${rows}. Target: ${t} moves. Total so far: ${totalMoves} moves (target ${totalTarget}).</p>
+        <button id="nx">${last?'See final result':`Next level (${LEVELS[lv+1][0]}×${LEVELS[lv+1][1]})`}</button></div>`;
       $('#nx').onclick=()=>{if(last)end();else{lv++;play()}};
     }
   }
   function end(){
-    const b=best('match',total);
-    stage.innerHTML=`<div class="center"><h1>All levels cleared!</h1><div class="score">${total} / ${LEVELS.length*100}</div>
-      <p class="muted">Your best: ${b}</p>
+    const b=bestLow(totalMoves);
+    stage.innerHTML=`<div class="center"><h1>All levels cleared!</h1><div class="score">${totalMoves} moves</div>
+      <p>${totalMoves<=totalTarget?'You beat the combined target of':'The combined target was'} ${totalTarget} moves.</p>
+      <p class="muted">Your fewest total moves: ${b}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=matchGame;
   }

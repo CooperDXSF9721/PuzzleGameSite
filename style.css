@@ -91,3 +91,10 @@ button:focus-visible,input:focus-visible{outline:2px solid #2563eb;outline-offse
 .simon .pad.r.lit{background:#e53935;box-shadow:0 0 22px #e5393599;transform:scale(1.03)}
 .simon .pad.y.lit{background:#fbc02d;box-shadow:0 0 22px #fbc02d99;transform:scale(1.03)}
 .simon .pad.b.lit{background:#1e88e5;box-shadow:0 0 22px #1e88e599;transform:scale(1.03)}
+
+/* memory match */
+.cgrid{display:grid;gap:8px;margin:16px auto}
+.cgrid .mcard,.cgrid .mcard:hover{aspect-ratio:1;width:100%;margin:0;padding:0;display:flex;align-items:center;justify-content:center;line-height:1;border-radius:10px;background:var(--ink);border:2px solid var(--ink);cursor:pointer}
+.cgrid .mcard:not(.up):not(.done):hover{background:#3a3a3a}
+.cgrid .mcard.up,.cgrid .mcard.up:hover{background:#fff;border-color:var(--ink);cursor:default}
+.cgrid .mcard.done,.cgrid .mcard.done:hover{background:#e6f4e6;border-color:#2e9e3a;cursor:default}

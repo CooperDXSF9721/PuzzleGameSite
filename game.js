@@ -5,7 +5,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 function best(key,val){try{const k='pgs-'+key;const b=Math.max(+localStorage.getItem(k)||0,val);localStorage.setItem(k,b);return b}catch(e){return val}}
 
 /* ---------- Router ---------- */
-const games={color:colorGame,size:sizeGame};
+const games={color:colorGame,size:sizeGame,memory:memoryGame};
 function route(){
   clearInterval(timer);
   const g=games[location.hash.slice(1)];
@@ -180,6 +180,59 @@ function sizeGame(){
       <p class="muted">Your best: ${bs}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=sizeGame;
+  }
+}
+
+/* ---------- Pattern Memory ---------- */
+function memoryGame(){
+  const PER=3,MAXSTRIKES=3; /* patterns per grid size, strikes allowed */
+  let size=2,done=0,score=0,strikes=0,lit,k;
+  stage.innerHTML=`<h1>Pattern Memory</h1>
+    <p class="muted">A grid flashes some lit squares. Once it goes blank, tap the squares that were lit and submit. Solve ${PER} patterns to move up a grid size, starting at 2×2. Each correct pattern scores one point per lit square. ${MAXSTRIKES} wrong answers ends the game.</p>
+    <button id="go">Start</button>`;
+  $('#go').onclick=next;
+  const status=()=>`<p class="muted center">Grid ${size}×${size}, pattern ${done+1} of ${PER}. Score ${score}. Strikes ${'●'.repeat(strikes)}${'○'.repeat(MAXSTRIKES-strikes)}</p>`;
+  const grid=cls=>`<div class="mgrid" style="grid-template-columns:repeat(${size},1fr)">${
+    Array.from({length:size*size},(_,i)=>`<button class="cell ${cls(i)}" data-i="${i}" aria-label="Square ${i+1}"></button>`).join('')}</div>`;
+  function next(){
+    k=Math.max(2,Math.floor(size*size*.4));
+    lit=new Set();
+    while(lit.size<k)lit.add(Math.floor(Math.random()*size*size));
+    stage.innerHTML=status()+`<p class="center"><strong>Memorize the lit squares</strong></p>`+grid(i=>lit.has(i)?'on':'');
+    timer=setTimeout(guess,Math.min(4500,1000+400*k));
+  }
+  function guess(){
+    const sel=new Set();
+    stage.innerHTML=status()+`<p class="center" id="cnt"></p>`+grid(()=>'')+`<div class="center"><button id="ok">Submit</button></div>`;
+    const cnt=()=>$('#cnt').textContent=`Tap the squares that were lit. Selected ${sel.size} of ${k}.`;
+    cnt();
+    stage.querySelectorAll('.cell').forEach(c=>c.onclick=()=>{
+      const i=+c.dataset.i;
+      if(sel.has(i)){sel.delete(i);c.classList.remove('sel')}else{sel.add(i);c.classList.add('sel')}
+      cnt();
+    });
+    $('#ok').onclick=()=>result(sel);
+  }
+  function result(sel){
+    const ok=sel.size===k&&[...lit].every(i=>sel.has(i));
+    let msg;
+    if(ok){score+=k;done++;msg=`Correct! +${k} points.`;
+      if(done>=PER){size++;done=0;msg+=` Next up: ${size}×${size}.`}}
+    else{strikes++;msg=`Not quite. Strike ${strikes} of ${MAXSTRIKES}.`}
+    const over=strikes>=MAXSTRIKES;
+    const shown=grid(i=>lit.has(i)?(sel.has(i)?'on':'miss'):(sel.has(i)?'bad':''));
+    stage.innerHTML=`<p class="center big">${ok?'✓':'✗'}</p><p class="center">${msg}</p>`+
+      shown.replace(/<button/g,'<button disabled')+
+      `<p class="center muted legend">Filled: correct. Dashed: missed. Red: wrong pick.</p>
+      <div class="center"><button id="nx">${over?'See final score':'Next pattern'}</button></div>`;
+    $('#nx').onclick=over?end:next;
+  }
+  function end(){
+    const b=best('memory',score);
+    stage.innerHTML=`<div class="center"><h1>Game over</h1><div class="score">${score} points</div>
+      <p class="muted">You reached ${size}×${size}. Your best: ${b}</p>
+      <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
+    $('#again').onclick=memoryGame;
   }
 }
 

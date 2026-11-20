@@ -72,3 +72,9 @@ button:focus-visible,input:focus-visible{outline:2px solid #2563eb;outline-offse
 .mgrid .cell.miss,.mgrid .cell.miss:hover{border:3px dashed var(--ink)}
 .mgrid .cell.bad,.mgrid .cell.bad:hover{background:#fde8e8;border-color:#c62828}
 .legend{font-size:14px;margin:0}
+
+/* quick count */
+.qbox{position:relative;width:100%;max-width:300px;aspect-ratio:1;margin:16px auto;border:2px solid var(--line);border-radius:8px;padding:0}
+.qbox .sq{position:absolute;width:9%;aspect-ratio:1;background:var(--ink);border-radius:2px}
+.qbox{overflow:hidden}
+.numin{font:inherit;font-size:28px;width:110px;text-align:center;padding:8px;border:2px solid var(--ink);border-radius:8px;margin:4px 0}

@@ -98,3 +98,6 @@ button:focus-visible,input:focus-visible{outline:2px solid #2563eb;outline-offse
 .cgrid .mcard:not(.up):not(.done):hover{background:#3a3a3a}
 .cgrid .mcard.up,.cgrid .mcard.up:hover{background:#fff;border-color:var(--ink);cursor:default}
 .cgrid .mcard.done,.cgrid .mcard.done:hover{background:#e6f4e6;border-color:#2e9e3a;cursor:default}
+
+/* lock pick */
+canvas.lock{display:block;width:100%;max-width:320px;height:auto;margin:16px auto;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}

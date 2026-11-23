@@ -5,7 +5,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 function best(key,val){try{const k='pgs-'+key;const b=Math.max(+localStorage.getItem(k)||0,val);localStorage.setItem(k,b);return b}catch(e){return val}}
 
 /* ---------- Router ---------- */
-const games={color:colorGame,size:sizeGame,memory:memoryGame,count:countGame,sequence:sequenceGame,match:matchGame};
+const games={color:colorGame,size:sizeGame,memory:memoryGame,count:countGame,sequence:sequenceGame,match:matchGame,lock:lockGame};
 function route(){
   clearInterval(timer);
   const g=games[location.hash.slice(1)];
@@ -408,6 +408,71 @@ function matchGame(){
       <p class="muted">Your fewest total moves: ${b}</p>
       <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
     $('#again').onclick=matchGame;
+  }
+}
+
+/* ---------- Lock Pick ---------- */
+let lockKey=null;
+function lockGame(){
+  if(lockKey){document.removeEventListener('keydown',lockKey);lockKey=null}
+  stage.innerHTML=`<h1>Lock Pick</h1>
+    <p class="muted">A dot spins around a ring. Tap when it is on the dark bar. Every time you hit it, the dot reverses, speeds up, and the bar gets smaller. Tap at the wrong time and the lock jams. Tap the ring or press the space bar. Your score is how many hits in a row.</p>
+    <button id="go">Start</button>`;
+  $('#go').onclick=run;
+  function run(){
+    stage.innerHTML=`<p class="muted center" id="st">Tap the ring (or press space) to begin.</p>
+      <canvas id="lk" class="lock" width="640" height="640" aria-label="Lock Pick game. Tap when the dot is on the bar."></canvas>`;
+    const cv=$('#lk'),ctx=cv.getContext('2d');ctx.scale(2,2);
+    const C=160,R=110,TAU=Math.PI*2;
+    const START_SPEED=2.0,SPEED_UP=.12,MAX_SPEED=6;   /* radians per second, added per hit, cap */
+    const START_HALF=.32,SHRINK=.01,MIN_HALF=.06;      /* half-width of the bar in radians */
+    let th=-Math.PI/2,dir=1,speed=START_SPEED,hw=START_HALF,score=0,phi=0,state='ready',dead=false,last=0;
+    const norm=a=>{a%=TAU;return a<0?a+TAU:a};
+    const diff=(a,b)=>{const d=norm(a-b);return d>Math.PI?TAU-d:d};
+    const newTarget=()=>{phi=norm(th+dir*(1.2+Math.random()*3.6))};
+    newTarget();
+    function draw(){
+      ctx.clearRect(0,0,320,320);
+      ctx.lineWidth=18;ctx.lineCap='butt';
+      ctx.beginPath();ctx.arc(C,C,R,0,TAU);ctx.strokeStyle='#eeeeee';ctx.stroke();
+      ctx.beginPath();ctx.arc(C,C,R,phi-hw,phi+hw);ctx.strokeStyle=dead?'#c62828':'#1a1a1a';ctx.stroke();
+      ctx.beginPath();ctx.arc(C+R*Math.cos(th),C+R*Math.sin(th),9,0,TAU);
+      ctx.fillStyle=dead?'#c62828':'#2563eb';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#ffffff';ctx.stroke();
+      ctx.fillStyle='#1a1a1a';ctx.font='700 64px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(score,C,C);
+    }
+    function loop(t){
+      if(!cv.isConnected)return;
+      const dt=Math.min(.05,(t-last)/1000||0);last=t;
+      if(state==='run'&&!dead)th=norm(th+dir*speed*dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+    function tap(){
+      if(dead)return;
+      if(state==='ready'){state='run';$('#st').textContent='Tap when the dot is on the bar.';return}
+      if(diff(th,phi)<=hw+.04){
+        score++;speed=Math.min(MAX_SPEED,speed+SPEED_UP);hw=Math.max(MIN_HALF,hw-SHRINK);
+        dir=-dir;newTarget();
+      }else{
+        dead=true;$('#st').textContent='Jammed!';
+        timer=setTimeout(end,900);
+      }
+    }
+    cv.onpointerdown=e=>{e.preventDefault();tap()};
+    lockKey=e=>{
+      if(!cv.isConnected){document.removeEventListener('keydown',lockKey);lockKey=null;return}
+      if(e.code==='Space'||e.key===' '){e.preventDefault();tap()}
+    };
+    document.addEventListener('keydown',lockKey);
+    requestAnimationFrame(loop);
+    function end(){
+      const b=best('lock',score);
+      stage.innerHTML=`<div class="center"><h1>Jammed!</h1><div class="score">${score}</div>
+        <p class="muted">${score===1?'lock picked':'locks picked'} in a row. Your best: ${b}</p>
+        <button id="again">Play again</button> <button class="alt" onclick="location.hash=''">All games</button></div>`;
+      $('#again').onclick=lockGame;
+    }
   }
 }
 

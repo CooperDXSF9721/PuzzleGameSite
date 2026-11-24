@@ -101,3 +101,9 @@ button:focus-visible,input:focus-visible{outline:2px solid #2563eb;outline-offse
 
 /* lock pick */
 canvas.lock{display:block;width:100%;max-width:320px;height:auto;margin:16px auto;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+
+/* logo */
+.logo{display:block;text-align:center;padding:28px 20px 0}
+.logo img{display:inline-block;width:min(300px,75%);height:auto}
+body:has(#game:not([hidden])) .logo img{width:110px}
+.hero{padding-top:28px}

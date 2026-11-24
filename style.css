@@ -101,17 +101,3 @@ button:focus-visible,input:focus-visible{outline:2px solid #2563eb;outline-offse
 
 /* lock pick */
 canvas.lock{display:block;width:100%;max-width:320px;height:auto;margin:16px auto;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
-
-/* dark blue site background with logo banner (background.jpeg) */
-html,body{background:#011134}
-.banner{display:block;width:100%;height:clamp(260px,50vw,520px);background:url(background.jpeg) no-repeat center top/auto 100%;-webkit-mask-image:linear-gradient(to bottom,#000 90%,transparent);mask-image:linear-gradient(to bottom,#000 90%,transparent)}
-body:has(#game:not([hidden])) .banner{height:clamp(130px,20vw,190px)}
-.hero{padding:8px 0 40px}
-.hero h1,#menu h2{color:#fff}
-.hero p{color:#b8c4e0}
-.card:hover,.card:focus-visible{border-color:#34d27b}
-.card.soon{background:transparent;border-color:rgba(255,255,255,.3);color:#8fa0c8}
-.card.soon p{color:#8fa0c8}
-.back{color:#b8c4e0}
-.back:hover{color:#fff}
-footer{border-top-color:rgba(255,255,255,.15);color:#8fa0c8}
